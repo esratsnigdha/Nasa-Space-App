@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Simple AQI Map (with Search)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <!-- Geocoder CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+  <style>
+    body { margin:0; }
+    #map { width: 100%; height: 100vh; }
+    .legend { 
+      background: white; 
+      padding: 10px; 
+      font-size: 14px; 
+      line-height: 18px; 
+      border-radius: 4px;
+    }
+    .legend span {
+      display: inline-block; 
+      width: 20px; 
+      height: 10px; 
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Geocoder JS -->
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+  <script>
+    // Initialize map
+    var map = L.map('map').setView([23.8103, 90.4125], 6); // Dhaka center
+
+    // Base map layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Mock AQI data
+    var aqiPoints = [
+      {lat: 23.81, lon: 90.41, aqi: 160, city: "Dhaka"},
+      {lat: 22.35, lon: 91.83, aqi: 90, city: "Chattogram"},
+      {lat: 24.90, lon: 91.87, aqi: 70, city: "Sylhet"},
+      {lat: 25.74, lon: 89.27, aqi: 45, city: "Rangpur"}
+    ];
+
+    // AQI color scale
+    function getColor(aqi) {
+      return aqi > 300 ? "#7e0023" :
+             aqi > 200 ? "#660099" :
+             aqi > 150 ? "#cc0033" :
+             aqi > 100 ? "#ff9933" :
+             aqi > 50  ? "#ffde33" :
+                         "#009966";
+    }
+
+    // Add circles
+    aqiPoints.forEach(p => {
+      L.circle([p.lat, p.lon], {
+        color: getColor(p.aqi),
+        fillColor: getColor(p.aqi),
+        fillOpacity: 0.6,
+        radius: 20000
+      }).addTo(map)
+        .bindPopup(`<b>${p.city}</b><br>AQI: ${p.aqi}`);
+    });
+
+    // Legend
+    var legend = L.control({position: 'bottomright'});
+    legend.onAdd = function () {
+      var div = L.DomUtil.create('div', 'legend');
+      var grades = [0, 50, 100, 150, 200, 300];
+      var labels = ["Good","Moderate","Unhealthy (SG)","Unhealthy","Very Unhealthy","Hazardous"];
+      for (var i=0; i<grades.length; i++) {
+        div.innerHTML +=
+          '<div><span style="background:'+ getColor(grades[i]+1) +'"></span> ' +
+          labels[i] + '</div>';
+      }
+      return div;
+    };
+    legend.addTo(map);
+
+    // 🔍 Add search control
+    L.Control.geocoder({
+      defaultMarkGeocode: true
+    }).addTo(map);
+  </script>
+</body>
+</html>
